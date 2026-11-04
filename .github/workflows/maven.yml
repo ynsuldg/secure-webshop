@@ -18,32 +18,36 @@ jobs:
       - name: Checka ut koden
         uses: actions/checkout@v4
 
+      - name: Checka ut mailbiblioteket
+        uses: actions/checkout@v4
+        with:
+          repository: ynsuldg/secure-webshop-message-service
+          path: secure-webshop-message-service
 
-      - name: Installera Java och konfigurera Maven auth
+      - name: Installera Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
           cache: maven
-          server-id: github
-          server-username: GITHUB_ACTOR
-          server-password: GITHUB_TOKEN
 
+      - name: Installera mailbiblioteket
+        run: mvn -B install -DskipTests -f secure-webshop-message-service/pom.xml
 
       - name: Bygg projektet
         run: mvn -B clean package
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
+        if: github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push Docker image
+        if: github.event_name == 'push'
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: anwarasry/projektet_a_secure_webshop:1.2.1
+          tags: ynsuldg/secure-webshop:1.2.1
